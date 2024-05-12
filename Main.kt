@@ -28,7 +28,7 @@ tailrec fun retrieveCoordinates(minesweeper: Minesweeper): Pair<Int, Int> {
     return retrieveCoordinates(minesweeper)
 }
 
-class Minesweeper(private val numberOfMines: Int) {
+class Minesweeper(numberOfMines: Int) {
     enum class State{
         NotFinished,
         Finished
