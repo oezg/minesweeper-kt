@@ -3,81 +3,90 @@ package minesweeper
 import kotlin.random.Random
 
 const val SIDE = 9
+val OFFSETS = listOf(
+    -1 to -1,   -1 to 0,    -1 to 1,
+     0 to -1,                0 to 1,
+     1 to -1,    1 to 0,     1 to 1
+)
 
 fun main() {
     print("How many mines do you want on the field? ")
     val numberOfMines = readln().toInt()
     val minesweeper = Minesweeper(numberOfMines)
-    while (minesweeper.state == Minesweeper.State.NotFinished) {
-        minesweeper.printMatrix()
-        val position = retrieveCoordinates(minesweeper)
-        minesweeper.mark(position)
-    }
+    loop(minesweeper)
+}
+
+tailrec fun loop(minesweeper: Minesweeper) {
     minesweeper.printMatrix()
-    println("Congratulations! You found all the mines!")
-}
-
-tailrec fun retrieveCoordinates(minesweeper: Minesweeper): Pair<Int, Int> {
-    print("Set/delete mines marks (x and y coordinates): ")
-    val (x, y) = readln().split(" ").map { it.toInt() }
-    if (minesweeper.isThereNumber(x, y)) {
-        println("There is a number here!")
-    } else {
-        return x to y
-    }
-    return retrieveCoordinates(minesweeper)
-}
-
-class Minesweeper(numberOfMines: Int) {
-    enum class State{
-        NotFinished,
-        Finished
-    }
-
-    var state = State.NotFinished
-    private val minePositions = generateDistinctNumbers(numberOfMines, SIDE * SIDE)
-    private val markedPositions = mutableSetOf<Int>()
-
-    private val matrix = List(SIDE) { row ->
-        MutableList(SIDE) { col ->
-            if ( row * SIDE + col in minePositions )
-                Cell.Mine()
-            else
-                Cell.Empty()
+    when (minesweeper.state) {
+        Minesweeper.State.NotExplored, Minesweeper.State.NotFinished -> {
+            val action = retrieveAction()
+            if (minesweeper.isValid(action))
+                minesweeper.execute(action)
+            loop(minesweeper)
         }
+        Minesweeper.State.Win -> println("Congratulations! You found all the mines!")
+        Minesweeper.State.Loss -> println("You stepped on a mine and failed!")
+    }
+}
+
+fun retrieveAction(): Action {
+    print("Set/unset mine marks or claim a cell as free: ")
+    val (x, y, action) = readln().split(" ")
+    val coordinate = y.toInt() - 1 to x.toInt() - 1
+    return when (action) {
+        "free" -> Action.Explore(coordinate)
+        "mine" -> Action.Mark(coordinate)
+        else -> throw IllegalArgumentException(action)
+    }
+}
+
+class Minesweeper(private val numberOfMines: Int) {
+    enum class State{
+        NotExplored,
+        NotFinished,
+        Win,
+        Loss
     }
 
-    init {
-        val offsets = listOf(-1 to -1, -1 to 0, -1 to 1, 0 to -1, 0 to 1, 1 to -1, 1 to 0, 1 to 1)
-        for (i in matrix.indices) {
-            for (j in matrix[i].indices) {
-                if (matrix[i][j] is Cell.Mine) {
-                    continue
+    var state = State.NotExplored
+    private var minedCoordinates : Set<Pair<Int,Int>> = emptySet()
+    private var matrix: List<List<Cell>> = List(SIDE) { List(SIDE) { Cell.Empty() } }
+
+    private val markedCoordinates
+        get() = matrix.flatMapIndexed { rowIndex, row ->
+            row.mapIndexedNotNull { colIndex, cell ->
+                if (cell.isMarked) rowIndex to colIndex else null } }.toSet()
+
+    private val unexploredCoordinates
+        get() = matrix.flatMapIndexed { rowIndex, row ->
+            row.mapIndexedNotNull { colIndex, cell ->
+                if (cell.isExplored) null else rowIndex to colIndex } }.toSet()
+
+    private fun neighbors(my: Pair<Int, Int>): List<Pair<Int, Int>> =
+        OFFSETS
+            .filter { my.first + it.first in 0 until SIDE && my.second + it.second in 0 until SIDE }
+            .map { my.first + it.first to my.second + it.second }
+
+    private fun countMinesAround(my: Pair<Int, Int>): Int = neighbors(my).count { it in minedCoordinates }
+
+    fun isValid(action: Action): Boolean = !getCell(action.coordinate).isExplored
+
+    fun execute(action: Action) =
+        when (action) {
+            is Action.Mark -> {
+                getCell(action.coordinate).remark()
+                state = if (markedCoordinates == minedCoordinates) State.Win else state
+            }
+            is Action.Explore -> {
+                if (state == State.NotExplored) {
+                    initializeMines(action.coordinate)
+                    state = State.NotFinished
                 }
-                val adjacentMines = offsets
-                    .filter { i + it.first in matrix.indices && j + it.second in matrix[i].indices  }
-                    .count { matrix[i + it.first][j + it.second] is Cell.Mine }
-                matrix[i][j] = Cell.Empty(minesAround =  adjacentMines)
+                explore(action.coordinate)
+                state = if (unexploredCoordinates == minedCoordinates) State.Win else state
             }
         }
-    }
-
-    fun mark(coordinate: Pair<Int, Int>) {
-        val position = coordinate.first - 1 + SIDE * (coordinate.second - 1)
-        if (position in markedPositions) {
-            markedPositions.remove(position)
-        } else {
-            markedPositions.add(position)
-        }
-        matrix[coordinate.second - 1][coordinate.first - 1].remark()
-        if (markedPositions == minePositions) {
-            state = State.Finished
-        }
-    }
-
-    fun isThereNumber(x: Int, y: Int): Boolean {
-        return (matrix[y-1][x-1] is Cell.Empty) && (matrix[y-1][x-1] as Cell.Empty).minesAround > 0
-    }
 
     fun printMatrix() {
         println()
@@ -86,33 +95,85 @@ class Minesweeper(numberOfMines: Int) {
         for ((index, row) in matrix.withIndex()) {
             print("${index + 1}|")
             for (cell in row) {
-                print(cell)
+                print(if (state == State.Loss && cell is Cell.Mine) 'X' else cell)
             }
             println("|")
         }
         println("—│—————————│")
     }
 
-    private fun generateDistinctNumbers(n: Int, upper: Int): Set<Int> {
-        val numbers = mutableSetOf<Int>()
-        while (numbers.size < n) {
-            numbers.add(Random.nextInt(upper))
+    private fun initializeMines(firstExploredCoordinate: Pair<Int, Int>) {
+        minedCoordinates = generateDistinctCoordinates(numberOfMines, firstExploredCoordinate)
+        matrix = List(SIDE) { row ->
+            List(SIDE) { col ->
+                val coordinate = row to col
+                if (coordinate in minedCoordinates)
+                    Cell.Mine(isMarked = getCell(coordinate).isMarked)
+                else
+                    Cell.Empty(countMinesAround(coordinate), isMarked = getCell(coordinate).isMarked)
+            }
         }
-        return numbers.toSet()
+    }
+
+    private fun explore(coordinate: Pair<Int, Int>) {
+        val cell = getCell(coordinate)
+        if (cell is Cell.Mine) {
+            state = State.Loss
+            return
+        }
+
+        if ((cell as Cell.Empty).isExplored) return
+
+        cell.explore()
+
+        if (cell.minesAround > 0) return
+
+        neighbors(coordinate).forEach { explore(it) }
+    }
+
+    private fun getCell(pair: Pair<Int, Int>): Cell = matrix[pair.first][pair.second]
+
+    private fun generateDistinctCoordinates(n: Int, coordinate: Pair<Int, Int>): Set<Pair<Int, Int>> {
+        val coordinates = mutableSetOf<Pair<Int, Int>>()
+        while (coordinates.size < n) {
+            val nextCoordinate = Random.nextInt(SIDE) to Random.nextInt(SIDE)
+            if (nextCoordinate == coordinate) continue
+            coordinates.add(nextCoordinate)
+        }
+        return coordinates.toSet()
     }
 }
 
 sealed class Cell {
-    open var marked: Boolean = false
+    open var isMarked: Boolean = false
     open fun remark() {
-        marked = !marked
+        isMarked = !isMarked
     }
-    data class Empty(override var marked: Boolean = false, val minesAround: Int = 0) : Cell() {
-        override fun toString() = if (minesAround > 0) "$minesAround" else if (marked) "*" else "."
+    open var isExplored: Boolean = false
+
+    data class Empty(val minesAround: Int = 0,
+                     override var isMarked: Boolean = false,
+                     override var isExplored: Boolean = false) : Cell() {
+
+        fun explore() {
+            isExplored = true
+            if (isMarked) remark()
+        }
+
+        override fun toString() = when {
+            isMarked -> "*"
+            !isExplored -> "."
+            minesAround == 0 -> "/"
+            else -> minesAround.toString()
+        }
     }
 
-    data class Mine(override var marked: Boolean = false) : Cell() {
-        override fun toString() = if (marked) "*" else "."
+    data class Mine(override var isMarked: Boolean = false) : Cell() {
+        override fun toString() = if (isMarked) "*" else "."
     }
+}
 
+sealed class Action(open val coordinate: Pair<Int, Int>) {
+    data class Mark(override val coordinate: Pair<Int, Int>) : Action(coordinate)
+    data class Explore(override val coordinate: Pair<Int, Int>) : Action(coordinate)
 }
