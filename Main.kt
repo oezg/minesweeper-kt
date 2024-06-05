@@ -1,11 +1,11 @@
 package minesweeper
 
 const val SIDE = 9
-val OFFSETS = listOf(
+val OFFSETS: List<Position> = listOf(
     -1 to -1,   -1 to 0,    -1 to 1,
      0 to -1,                0 to 1,
      1 to -1,    1 to 0,     1 to 1
-)
+).map { Position(row = it.first, col = it.second) }
 
 fun main() {
     print("How many mines do you want on the field? ")
@@ -28,11 +28,11 @@ tailrec fun loop(minesweeper: Minesweeper) {
 
 fun retrieveAction(): Action {
     print("Set/unset mine marks or claim a cell as free: ")
-    val (x, y, action) = readln().split(" ")
-    val coordinate = y.toInt() - 1 to x.toInt() - 1
+    val (col, row, action) = readln().split(" ")
+    val position = Position(row = row.toInt() - 1, col = col.toInt() - 1)
     return when (action) {
-        "free" -> Action.Explore(coordinate)
-        "mine" -> Action.Mark(coordinate)
+        "free" -> Action.Explore(position)
+        "mine" -> Action.Mark(position)
         else -> throw IllegalArgumentException(action)
     }
 }
