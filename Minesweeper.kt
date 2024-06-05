@@ -10,18 +10,12 @@ class Minesweeper(private val numberOfMines: Int) {
         Loss
     }
 
+
+
     var state = State.NotExplored
+        private set
     private var minedCoordinates : Set<Pair<Int,Int>> = emptySet()
     private var grid = Grid()
-
-    private fun neighbors(my: Pair<Int, Int>): List<Pair<Int, Int>> =
-        OFFSETS
-            .filter { my.first + it.first in 0 until SIDE && my.second + it.second in 0 until SIDE }
-            .map { my.first + it.first to my.second + it.second }
-
-
-
-    fun isValid(action: Action): Boolean = !grid.getCell(action.coordinate).isExplored
 
     fun execute(action: Action) =
         when (action) {
@@ -36,9 +30,16 @@ class Minesweeper(private val numberOfMines: Int) {
                     state = State.NotFinished
                 }
                 explore(action.coordinate)
-                state = if (unexploredCoordinates == minedCoordinates) State.Win else state
+                state = if (grid.unexploredCoordinates == minedCoordinates) State.Win else state
             }
         }
+
+    private fun neighbors(my: Pair<Int, Int>): List<Pair<Int, Int>> =
+        OFFSETS
+            .filter { my.first + it.first in 0 until SIDE && my.second + it.second in 0 until SIDE }
+            .map { my.first + it.first to my.second + it.second }
+
+    fun isValid(action: Action): Boolean = !grid.isExplored(action.coordinate)
 
     fun printMatrix() {
         println()
