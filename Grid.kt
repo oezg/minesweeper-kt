@@ -43,6 +43,9 @@ class Grid(val matrix: List<List<Cell>> = List(SIDE) { List(SIDE) { Cell.Empty()
             .filter { my.first + it.first in 0 until SIDE && my.second + it.second in 0 until SIDE }
             .map { my.first + it.first to my.second + it.second }
 
+    fun asString(state: Minesweeper.State): List<String> =
+        matrix.map { it.joinToString(separator = "") { if (state == Minesweeper.State.Loss && it is Cell.Mine) "X" else it.toString() } }
+
     val markedCoordinates
         get() = matrix.flatMapIndexed { rowIndex, row ->
             row.mapIndexedNotNull { colIndex, cell ->

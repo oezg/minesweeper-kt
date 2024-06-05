@@ -37,13 +37,7 @@ class Minesweeper(private val numberOfMines: Int) {
         println()
         println(" │123456789│")
         println("—│—————————│")
-        for ((index, row) in grid.matrix.withIndex()) {
-            print("${index + 1}|")
-            for (cell in row) {
-                print(if (state == State.Loss && cell is Cell.Mine) 'X' else cell)
-            }
-            println("|")
-        }
+        grid.asString(state).forEachIndexed { index, row -> println("${index + 1}|$row|") }
         println("—│—————————│")
     }
 
