@@ -10,34 +10,26 @@ class Minesweeper(private val numberOfMines: Int) {
         Loss
     }
 
-
-
     var state = State.NotExplored
         private set
     private var minedCoordinates : Set<Pair<Int,Int>> = emptySet()
     private var grid = Grid()
 
-    fun execute(action: Action) =
-        when (action) {
+    fun execute(action: Action) {
+        state = when (action) {
             is Action.Mark -> {
                 grid.mark(action.coordinate)
-                state = if (grid.markedCoordinates == minedCoordinates) State.Win else state
+                if (grid.markedCoordinates == minedCoordinates) State.Win else state
             }
             is Action.Explore -> {
                 if (state == State.NotExplored) {
-                    minedCoordinates = generateDistinctCoordinates(action.coordinate)
-                    grid = grid.initializeMines(minedCoordinates)
-                    state = State.NotFinished
+                    setUpBeforeFirstExploration(action)
                 }
                 explore(action.coordinate)
-                state = if (grid.unexploredCoordinates == minedCoordinates) State.Win else state
+                if (grid.unexploredCoordinates == minedCoordinates) State.Win else state
             }
         }
-
-    private fun neighbors(my: Pair<Int, Int>): List<Pair<Int, Int>> =
-        OFFSETS
-            .filter { my.first + it.first in 0 until SIDE && my.second + it.second in 0 until SIDE }
-            .map { my.first + it.first to my.second + it.second }
+    }
 
     fun isValid(action: Action): Boolean = !grid.isExplored(action.coordinate)
 
@@ -55,26 +47,17 @@ class Minesweeper(private val numberOfMines: Int) {
         println("—│—————————│")
     }
 
-
-
-    private fun explore(coordinate: Pair<Int, Int>) {
-        val cell = grid.getCell(coordinate)
-        if (cell is Cell.Mine) {
-            state = State.Loss
-            return
-        }
-
-        if ((cell as Cell.Empty).isExplored) return
-
-        cell.explore()
-
-        if (cell.minesAround > 0) return
-
-        neighbors(coordinate).forEach { explore(it) }
+    private fun setUpBeforeFirstExploration(action: Action) {
+        minedCoordinates = generateDistinctCoordinates(action.coordinate)
+        grid = grid.initializeMines(minedCoordinates)
+        state = State.NotFinished
     }
 
+    private fun explore(coordinate: Pair<Int, Int>) {
+        state = grid.explore(coordinate)
+    }
 
-    fun generateDistinctCoordinates(coordinate: Pair<Int, Int>): Set<Pair<Int, Int>> {
+    private fun generateDistinctCoordinates(coordinate: Pair<Int, Int>): Set<Pair<Int, Int>> {
         val coordinates = mutableSetOf<Pair<Int, Int>>()
         while (coordinates.size < numberOfMines) {
             val nextCoordinate = Random.nextInt(SIDE) to Random.nextInt(SIDE)

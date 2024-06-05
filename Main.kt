@@ -17,14 +17,12 @@ fun main() {
 tailrec fun loop(minesweeper: Minesweeper) {
     minesweeper.printMatrix()
     when (minesweeper.state) {
-        Minesweeper.State.NotExplored, Minesweeper.State.NotFinished -> {
-            val action = retrieveAction()
-            if (minesweeper.isValid(action))
-                minesweeper.execute(action)
-            loop(minesweeper)
-        }
         Minesweeper.State.Win -> println("Congratulations! You found all the mines!")
         Minesweeper.State.Loss -> println("You stepped on a mine and failed!")
+        Minesweeper.State.NotExplored, Minesweeper.State.NotFinished -> {
+            retrieveAction().takeIf { minesweeper.isValid(it) }?.let { minesweeper.execute(it) }
+            loop(minesweeper)
+        }
     }
 }
 

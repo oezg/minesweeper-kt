@@ -6,26 +6,42 @@ class Grid(val matrix: List<List<Cell>> = List(SIDE) { List(SIDE) { Cell.Empty()
         val newMatrix = List(SIDE) { row ->
             List(SIDE) { col ->
                 val coordinate = row to col
-                if (coordinate in minedCoordinates)
+                if (coordinate in minedCoordinates) {
                     Cell.Mine(marked = getCell(coordinate).isMarked)
-                else
-                    Cell.Empty(countMinesAround(coordinate), marked = getCell(coordinate).isMarked)
+                } else {
+                    val minesAround = neighbors(coordinate).count { it in minedCoordinates }
+                    Cell.Empty(minesAround = minesAround, marked = getCell(coordinate).isMarked)
+                }
             }
         }
         return Grid(newMatrix)
     }
 
-    fun mark(coordinate: Pair<Int, Int>) {
-        getCell(coordinate).remark()
+    fun explore(coordinate: Pair<Int, Int>): Minesweeper.State {
+        val cell = getCell(coordinate)
+        return when {
+            cell is Cell.Mine -> Minesweeper.State.Loss
+            cell.isExplored -> Minesweeper.State.NotFinished
+            else -> {
+                (cell as Cell.Empty).explore()
+                if (cell.minesAround == 0) {
+                    neighbors(coordinate).forEach { explore(it) }
+                }
+                Minesweeper.State.NotFinished
+            }
+        }
     }
 
-    fun isExplored(coordinate: Pair<Int, Int>): Boolean {
-        return getCell(coordinate).isExplored
-    }
+    fun mark(coordinate: Pair<Int, Int>) = getCell(coordinate).remark()
 
-    fun getCell(pair: Pair<Int, Int>): Cell = matrix[pair.first][pair.second]
+    fun isExplored(coordinate: Pair<Int, Int>) = getCell(coordinate).isExplored
 
-    private fun countMinesAround(my: Pair<Int, Int>): Int = neighbors(my).count { it in minedCoordinates }
+    private fun getCell(pair: Pair<Int, Int>): Cell = matrix[pair.first][pair.second]
+
+    private fun neighbors(my: Pair<Int, Int>): List<Pair<Int, Int>> =
+        OFFSETS
+            .filter { my.first + it.first in 0 until SIDE && my.second + it.second in 0 until SIDE }
+            .map { my.first + it.first to my.second + it.second }
 
     val markedCoordinates
         get() = matrix.flatMapIndexed { rowIndex, row ->
