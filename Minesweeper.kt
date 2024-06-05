@@ -69,9 +69,9 @@ class Minesweeper(private val numberOfMines: Int) {
             List(SIDE) { col ->
                 val coordinate = row to col
                 if (coordinate in minedCoordinates)
-                    Cell.Mine(isMarked = getCell(coordinate).isMarked)
+                    Cell.Mine(marked = getCell(coordinate).isMarked)
                 else
-                    Cell.Empty(countMinesAround(coordinate), isMarked = getCell(coordinate).isMarked)
+                    Cell.Empty(countMinesAround(coordinate), marked = getCell(coordinate).isMarked)
             }
         }
     }

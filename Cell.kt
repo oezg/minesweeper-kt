@@ -1,20 +1,18 @@
 package minesweeper
 
-sealed class Cell(marked: Boolean = false, explored: Boolean = false) {
-    protected var cellMarked: Boolean = marked
-    protected var cellExplored: Boolean = explored
-    val isMarked: Boolean get() = cellMarked
-    val isExplored: Boolean get() = cellExplored
+sealed class Cell(private var _marked: Boolean, protected var _explored: Boolean = false) {
+    val isMarked: Boolean get() = _marked
+    val isExplored: Boolean get() = _explored
     fun remark() {
-        cellMarked = !cellMarked
+        _marked = !_marked
     }
 
-    class Empty(val minesAround: Int = 0,
-                     isMarked: Boolean = false,
-                     isExplored: Boolean = false) : Cell(marked = isMarked, explored = isExplored) {
+    data class Empty(val minesAround: Int = 0,
+                     val marked: Boolean = false,
+                     val explored: Boolean = false) : Cell(_marked = marked, _explored = explored) {
 
         fun explore() {
-            cellExplored = true
+            _explored = true
             if (isMarked) remark()
         }
 
@@ -26,7 +24,7 @@ sealed class Cell(marked: Boolean = false, explored: Boolean = false) {
         }
     }
 
-    class Mine(isMarked: Boolean = false) : Cell(marked = isMarked) {
+    data class Mine(val marked: Boolean = false) : Cell(_marked = marked) {
         override fun toString() = if (isMarked) "*" else "."
     }
 }
