@@ -6,6 +6,7 @@ sealed class Cell(private var _marked: Boolean, protected var _explored: Boolean
     fun remark() {
         _marked = !_marked
     }
+    open fun asString(state: Grid.State): String = "."
 
     data class Empty(val minesAround: Int = 0,
                      val marked: Boolean = false,
@@ -16,7 +17,7 @@ sealed class Cell(private var _marked: Boolean, protected var _explored: Boolean
             if (isMarked) remark()
         }
 
-        override fun toString() = when {
+        override fun asString(state: Grid.State): String = when {
             isMarked -> "*"
             !isExplored -> "."
             minesAround == 0 -> "/"
@@ -25,6 +26,11 @@ sealed class Cell(private var _marked: Boolean, protected var _explored: Boolean
     }
 
     data class Mine(val marked: Boolean = false) : Cell(_marked = marked) {
-        override fun toString() = if (isMarked) "*" else "."
+        override fun asString(state: Grid.State) =
+            when {
+                state == Grid.State.Loss -> "X"
+                isMarked -> "*"
+                else -> "."
+            }
     }
 }

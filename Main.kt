@@ -17,9 +17,9 @@ fun main() {
 tailrec fun loop(minesweeper: Minesweeper) {
     minesweeper.printMatrix()
     when (minesweeper.state) {
-        Minesweeper.State.Win -> println("Congratulations! You found all the mines!")
-        Minesweeper.State.Loss -> println("You stepped on a mine and failed!")
-        Minesweeper.State.NotExplored, Minesweeper.State.NotFinished -> {
+        Grid.State.Win -> println("Congratulations! You found all the mines!")
+        Grid.State.Loss -> println("You stepped on a mine and failed!")
+        Grid.State.NotExplored, Grid.State.NotFinished -> {
             retrieveAction().takeIf { minesweeper.isValid(it) }?.let { minesweeper.execute(it) }
             loop(minesweeper)
         }

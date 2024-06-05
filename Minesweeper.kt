@@ -3,17 +3,10 @@ package minesweeper
 import kotlin.random.Random
 
 class Minesweeper(private val numberOfMines: Int) {
-    enum class State{
-        NotExplored,
-        NotFinished,
-        Win,
-        Loss
-    }
 
-    var state = State.NotExplored
-        private set
     private var minedCoordinates : Set<Position> = emptySet()
     private var grid = Grid()
+    val state get() = grid.state
 
     fun execute(action: Action) {
         state = when (action) {
@@ -44,7 +37,6 @@ class Minesweeper(private val numberOfMines: Int) {
     private fun setUpBeforeFirstExploration(action: Action) {
         minedCoordinates = generateMinePositions(action.position)
         grid = grid.initializeMines(minedCoordinates)
-        state = State.NotFinished
     }
 
     private fun explore(position: Position) {
