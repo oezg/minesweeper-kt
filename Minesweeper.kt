@@ -16,10 +16,6 @@ class Minesweeper(numberOfMines: Int) {
     fun isValid(action: Action): Boolean = !grid.isExplored(action.position)
 
     fun printMatrix() {
-        println()
-        println(" │123456789│")
-        println("—│—————————│")
-        grid.asString.forEachIndexed { index, row -> println("${index + 1}|$row|") }
-        println("—│—————————│")
+        println(grid)
     }
 }

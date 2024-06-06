@@ -1,5 +1,6 @@
 package minesweeper
 
+import java.io.File.separator
 import kotlin.random.Random
 
 class Grid(private val numberOfMines: Int) {
@@ -45,8 +46,18 @@ class Grid(private val numberOfMines: Int) {
 
     fun isExplored(position: Position): Boolean = getCell(position).isExplored
 
-    val asString: List<String>
-        get() = matrix.map { it.joinToString(separator = "") { it.asString(state) } }
+    override fun toString(): String =
+        matrix.withIndex().joinToString (
+            separator = "\n",
+            prefix = "\n │123456789│\n—│—————————│\n",
+            postfix = "\n—│—————————│"
+        ) {(index, value) ->
+            value.joinToString(
+                separator = "",
+                prefix = "$index|",
+                postfix = "|"
+            ) { it.asString(state) }
+        }
 
     private val initializeMines: List<List<Cell>>
         get() = List(SIDE) { row ->
