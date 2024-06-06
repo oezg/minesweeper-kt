@@ -19,7 +19,7 @@ tailrec fun loop(minesweeper: Minesweeper) {
     when (minesweeper.state) {
         Grid.State.Win -> println("Congratulations! You found all the mines!")
         Grid.State.Loss -> println("You stepped on a mine and failed!")
-        Grid.State.NotExplored, Grid.State.NotFinished -> {
+        Grid.State.NotOver -> {
             retrieveAction().takeIf { minesweeper.isValid(it) }?.let { minesweeper.execute(it) }
             loop(minesweeper)
         }
