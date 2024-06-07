@@ -2,31 +2,28 @@ package minesweeper
 
 data class Minesweeper(val numberOfMines: Int) {
 
-    enum class GameState {
-        NotOver,
-        Win,
-        Loss
-    }
-
     private var grid = Grid(numberOfMines)
 
-    fun execute(action: Action): GameState =
+    fun execute(action: Action): Action.Result =
         when (action) {
             is Action.Mark -> {
                 grid.mark(action.position)
                 if (grid.isAllMinesMarked)
-                    GameState.Win
+                    Action.Result.PlayerWins
                 else
-                    GameState.NotOver
+                    Action.Result.GameNotOver
             }
             is Action.Explore -> {
+                if (grid.isNotYetExplored) {
+                    grid = grid.setupMines(action.position)
+                }
                 grid.explore(action.position)
                 if (grid.isMineExplored)
-                    GameState.Loss
+                    Action.Result.PlayerLoses
                 else if (grid.isAllEmptyExplored)
-                    GameState.Win
+                    Action.Result.PlayerWins
                 else
-                    GameState.NotOver
+                    Action.Result.GameNotOver
             }
         }
 
@@ -34,4 +31,13 @@ data class Minesweeper(val numberOfMines: Int) {
         !grid.isExplored(action.position)
 
     fun printMatrix() = println(grid)
+    fun printWin() {
+        printMatrix()
+        println("Congratulations! You found all the mines!")
+    }
+
+    fun printLose() {
+        println(grid.AsLost())
+        println("You stepped on a mine and failed!")
+    }
 }

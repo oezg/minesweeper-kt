@@ -1,35 +1,50 @@
 package minesweeper
 
-sealed class Cell(private var _marked: Boolean, protected var _explored: Boolean = false) {
-    val isMarked: Boolean get() = _marked
-    val isExplored: Boolean get() = _explored
-    fun remark() {
-        _marked = !_marked
-    }
+sealed class Cell(open val marked: Boolean, open val explored: Boolean) {
+    abstract fun remark(): Cell
+    abstract fun explore(): Cell
+    abstract fun asString(): String
 
-    fun explore() {
-        _explored = true
-        if (isMarked) remark()
-    }
-    open fun asString(state: Grid.State): String = "."
+    open fun loser() = "."
 
     data class Empty(val minesAround: Int = 0,
-                     val marked: Boolean = false,
-                     val explored: Boolean = false) : Cell(_marked = marked, _explored = explored) {
+                     override val marked: Boolean = false,
+                     override val explored: Boolean = false) : Cell(marked = marked, explored = explored) {
+        override fun remark(): Cell {
+            require (!explored) { "Explored empty cell can not be marked" }
+            return Empty(minesAround = minesAround, marked = !marked)
+        }
 
-        override fun asString(state: Grid.State): String = when {
-            isMarked -> "*"
-            !isExplored -> "."
+        override fun explore(): Cell {
+            return Empty(minesAround = minesAround, marked = false, explored = true)
+        }
+
+        override fun asString(): String = when {
+            marked -> "*"
+            !explored -> "."
             minesAround == 0 -> "/"
             else -> minesAround.toString()
         }
     }
 
-    data class Mine(val marked: Boolean = false) : Cell(_marked = marked) {
+    data class Mine(override val marked: Boolean, override val explored: Boolean = false) : Cell(marked = marked, explored = explored) {
 
-        override fun asString(state: Grid.State) = when {
-                state == Grid.State.Loss -> "X"
-                isMarked -> "*"
+        override fun loser(): String {
+            return "X"
+        }
+
+        override fun remark(): Cell {
+            require (!explored) { "Mine cannot be explored" }
+            return Mine(marked = !marked, explored = false)
+        }
+
+        override fun explore(): Cell {
+            return Mine(marked = false, explored = true)
+        }
+
+
+        override fun asString() = when {
+                marked -> "*"
                 else -> "."
             }
     }
