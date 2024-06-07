@@ -16,14 +16,15 @@ fun main() {
 
 tailrec fun loop(minesweeper: Minesweeper) {
     minesweeper.printMatrix()
-    when (minesweeper.state) {
-        Grid.State.Win -> println("Congratulations! You found all the mines!")
-        Grid.State.Loss -> println("You stepped on a mine and failed!")
-        Grid.State.NotOver -> {
-            retrieveAction().takeIf { minesweeper.isValid(it) }?.let { minesweeper.execute(it) }
-            loop(minesweeper)
+    val action = retrieveAction()
+    if (!minesweeper.isValid(action))
+        loop(minesweeper)
+    else
+        when (minesweeper.execute(action)) {
+            Minesweeper.GameState.Win -> println("Congratulations! You found all the mines!")
+            Minesweeper.GameState.Loss -> println("You stepped on a mine and failed!")
+            Minesweeper.GameState.NotOver -> loop(minesweeper)
         }
-    }
 }
 
 fun retrieveAction(): Action {

@@ -1,21 +1,37 @@
 package minesweeper
 
-class Minesweeper(numberOfMines: Int) {
+data class Minesweeper(val numberOfMines: Int) {
+
+    enum class GameState {
+        NotOver,
+        Win,
+        Loss
+    }
 
     private var grid = Grid(numberOfMines)
 
-    val state get() = grid.state
-
-    fun execute(action: Action) {
+    fun execute(action: Action): GameState =
         when (action) {
-            is Action.Mark -> grid.mark(action.position)
-            is Action.Explore -> grid.explore(action.position)
+            is Action.Mark -> {
+                grid.mark(action.position)
+                if (grid.isAllMinesMarked)
+                    GameState.Win
+                else
+                    GameState.NotOver
+            }
+            is Action.Explore -> {
+                grid.explore(action.position)
+                if (grid.isMineExplored)
+                    GameState.Loss
+                else if (grid.isAllEmptyExplored)
+                    GameState.Win
+                else
+                    GameState.NotOver
+            }
         }
-    }
 
-    fun isValid(action: Action): Boolean = !grid.isExplored(action.position)
+    fun isValid(action: Action): Boolean =
+        !grid.isExplored(action.position)
 
-    fun printMatrix() {
-        println(grid)
-    }
+    fun printMatrix() = println(grid)
 }

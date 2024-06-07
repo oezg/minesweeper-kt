@@ -1,66 +1,53 @@
 package minesweeper
 
-import java.io.File.separator
 import kotlin.random.Random
 
-class Grid(private val numberOfMines: Int) {
-
-    enum class State{
-        NotOver,
-        Win,
-        Loss
-    }
+class Grid(private val numberOfMines: Int, private val matrix: List<List<Cell>> = List(SIDE) { List(SIDE) { Cell.Empty() } }) {
 
     private var minedPositions : Set<Position> = emptySet()
-    var matrix: List<List<Cell>> = List(SIDE) { List(SIDE) { Cell.Empty() } }
-        private set
-    var state = State.NotOver
-        private set
+    val isAllEmptyExplored: Boolean
+        get() = unexploredPositions == minedPositions
+    val isAllMinesMarked: Boolean
+        get() = markedPositions == minedPositions
+
+    val isNotYetExplored: Boolean =
+        !matrix.flatten().any { it.isExplored }
+
     fun explore(position: Position) {
-        if (minedPositions.isEmpty()) {
-            minedPositions = generateMinePositions(position)
-            matrix = initializeMines
-        }
         val cell = getCell(position)
-        state = when {
-            cell is Cell.Mine -> State.Loss
-            cell.isExplored -> State.NotOver
-            else -> {
-                (cell as Cell.Empty).explore()
-                if (cell.minesAround == 0) {
-                    neighbors(position).forEach { explore(it) }
-                }
-                if (unexploredPositions == minedPositions)
-                    State.Win
-                else
-                    State.NotOver
-            }
-        }
+        cell.explore()
+        if (cell is Cell.Empty && cell.minesAround == 0)
+            neighbors(position).forEach { explore(it) }
     }
 
-    fun mark(position: Position) {
-        getCell(position).remark()
-        if (markedPositions == minedPositions)
-            state = State.Win
+    fun setupMines(position: Position): Grid {
+        minedPositions = generateMinePositions(position)
+        return Grid(numberOfMines, initializeMines)
     }
+
+    fun mark(position: Position) =
+        getCell(position).remark()
+
+    val isMineExplored: Boolean
+        get() = minedPositions.any { isExplored(it) }
 
     fun isExplored(position: Position): Boolean = getCell(position).isExplored
 
     override fun toString(): String =
         matrix.withIndex().joinToString (
-            separator = "\n",
+            separator = "",
             prefix = "\n │123456789│\n—│—————————│\n",
-            postfix = "\n—│—————————│"
-        ) {(index, value) ->
-            value.joinToString(
+            postfix = "—│—————————│"
+        ) {(index, row) ->
+            row.joinToString(
                 separator = "",
                 prefix = "$index|",
-                postfix = "|"
+                postfix = "|\n"
             ) { it.asString(state) }
         }
 
-    private val initializeMines: List<List<Cell>>
-        get() = List(SIDE) { row ->
+    private val initializeMines: List<List<Cell>> =
+        List(SIDE) { row ->
             List(SIDE) { col ->
                 val position = Position(row, col)
                 if (position in minedPositions) {
@@ -72,13 +59,13 @@ class Grid(private val numberOfMines: Int) {
             }
         }
 
-    private val markedPositions: Set<Position>
-        get() = matrix.flatMapIndexed { rowIndex, row ->
+    private val markedPositions: Set<Position> =
+        matrix.flatMapIndexed { rowIndex, row ->
             row.mapIndexedNotNull { colIndex, cell ->
                 if (cell.isMarked) Position(rowIndex, colIndex) else null } }.toSet()
 
-    private val unexploredPositions: Set<Position>
-        get() = matrix.flatMapIndexed { rowIndex, row ->
+    private val unexploredPositions: Set<Position> =
+        matrix.flatMapIndexed { rowIndex, row ->
             row.mapIndexedNotNull { colIndex, cell ->
                 if (cell.isExplored) null else Position(rowIndex, colIndex) } }.toSet()
 
