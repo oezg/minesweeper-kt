@@ -2,7 +2,9 @@ package minesweeper
 
 import kotlin.random.Random
 
-class Grid(private val numberOfMines: Int, private val matrix: List<List<Cell>> = List(SIDE) { List(SIDE) { Cell.Empty() } }) {
+typealias Matrix = List<List<Cell>>
+
+class Grid(private val numberOfMines: Int, private val matrix: Matrix = List(SIDE) { List(SIDE) { Empty(0, false, false) } }) {
 
     private var minedPositions : Set<Action.Position> = emptySet()
     val isAllEmptyExplored: Boolean
@@ -13,12 +15,34 @@ class Grid(private val numberOfMines: Int, private val matrix: List<List<Cell>> 
     val isNotYetExplored: Boolean =
         !matrix.flatten().any { it.explored }
 
-    fun explore(position: Action.Position) {
-        val cell = getCell(position)
-        cell.explore()
-        if (cell is Cell.Empty && cell.minesAround == 0)
-            neighbors(position).forEach { explore(it) }
+    fun explore(position: Action.Position): Grid {
+        if (getCell(position).explored) {
+            return this
+        }
+        val cell = getCell(position).explore()
+
+        var nextGrid = Grid(numberOfMines, getNextMatrix(position, cell))
+
+        if (cell !is Empty || cell.minesAround > 0) {
+            return nextGrid
+        }
+
+        for (neighbor in neighbors(position)) {
+            nextGrid = nextGrid.explore(neighbor)
+        }
+
+        return nextGrid
     }
+
+    fun getNextMatrix(position: Action.Position, cell: Cell): Matrix =
+        List(SIDE) {row ->
+            List(SIDE) {col ->
+                if (position == Action.Position(row = row, col = col))
+                    cell
+                else
+                    getCell(position)
+            }
+        }
 
     fun setupMines(position: Action.Position): Grid {
         minedPositions = generateMinePositions(position)
@@ -33,18 +57,16 @@ class Grid(private val numberOfMines: Int, private val matrix: List<List<Cell>> 
 
     fun isExplored(position: Action.Position): Boolean = getCell(position).explored
 
-    override fun toString(): String = toStringGeneral { it.asString() }
-
-
     private val initializeMines: List<List<Cell>> =
         List(SIDE) { row ->
             List(SIDE) { col ->
                 val position = Action.Position(row, col)
+                val cell = getCell(position)
                 if (position in minedPositions) {
-                    Cell.Mine(marked = getCell(position).marked)
+                    Mine(marked = cell.marked, explored = cell.explored)
                 } else {
                     val minesAround = neighbors(position).count { it in minedPositions }
-                    Cell.Empty(minesAround = minesAround, marked = getCell(position).marked)
+                    Empty(minesAround = minesAround, marked = cell.marked, explored = cell.explored)
                 }
             }
         }
@@ -76,7 +98,7 @@ class Grid(private val numberOfMines: Int, private val matrix: List<List<Cell>> 
         return positions.toSet()
     }
 
-    fun toStringGeneral(funky: (Cell) -> String): String {
+    override fun toString(): String {
         return matrix.withIndex().joinToString (
             separator = "",
             prefix = "\n │123456789│\n—│—————————│\n",
@@ -86,11 +108,21 @@ class Grid(private val numberOfMines: Int, private val matrix: List<List<Cell>> 
                 separator = "",
                 prefix = "$index|",
                 postfix = "|\n"
-            ) { funky(it) }
+            )
         }
     }
 
     fun AsLost(): String {
-        return toStringGeneral { it.loser() }
+        return matrix.withIndex().joinToString (
+            separator = "",
+            prefix = "\n │123456789│\n—│—————————│\n",
+            postfix = "—│—————————│"
+        ) {(index, row) ->
+            row.joinToString(
+                separator = "",
+                prefix = "$index|",
+                postfix = "|\n"
+            ) { it.loser() }
+        }
     }
 }

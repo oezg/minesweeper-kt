@@ -14,10 +14,12 @@ data class Minesweeper(val numberOfMines: Int) {
                     Action.Result.GameNotOver
             }
             is Action.Explore -> {
-                if (grid.isNotYetExplored) {
+
+                if (grid.isNotYetExplored)
                     grid = grid.setupMines(action.position)
-                }
-                grid.explore(action.position)
+
+                grid = grid.explore(action.position)
+
                 if (grid.isMineExplored)
                     Action.Result.PlayerLoses
                 else if (grid.isAllEmptyExplored)
