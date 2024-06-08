@@ -39,7 +39,7 @@ data class Minesweeper(val numberOfMines: Int) {
     }
 
     fun printLose() {
-        println(grid.AsLost())
+        println(grid.toStringLost())
         println("You stepped on a mine and failed!")
     }
 }

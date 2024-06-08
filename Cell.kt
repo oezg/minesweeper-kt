@@ -1,33 +1,33 @@
 package minesweeper
 
-sealed class Cell(open val marked: Boolean, open val explored: Boolean) {
+sealed class Cell(open val isMarked: Boolean, open val isExplored: Boolean) {
     abstract fun remark(): Cell
     abstract fun explore(): Cell
     open fun loser() = toString()
 }
 
 data class Empty(val minesAround: Int,
-                 override val marked: Boolean,
-                 override val explored: Boolean) : Cell(marked = marked, explored = explored) {
+                 override val isMarked: Boolean,
+                 override val isExplored: Boolean) : Cell(isMarked = isMarked, isExplored = isExplored) {
     override fun remark(): Cell {
-        require (!explored) { "Explored empty cell can not be marked" }
-        return Empty(minesAround = minesAround, marked = !marked, explored = false)
+        require (!isExplored) { "Explored empty cell can not be marked" }
+        return Empty(minesAround = minesAround, isMarked = !isMarked, isExplored = false)
     }
-    override fun explore() = Empty(minesAround = minesAround, marked = false, explored = true)
+    override fun explore() = Empty(minesAround = minesAround, isMarked = false, isExplored = true)
     override fun toString(): String = when {
-        marked -> "*"
-        !explored -> "."
+        isMarked -> "*"
+        !isExplored -> "."
         minesAround == 0 -> "/"
         else -> minesAround.toString()
     }
 }
 
-data class Mine(override val marked: Boolean, override val explored: Boolean) : Cell(marked = marked, explored = explored) {
+data class Mine(override val isMarked: Boolean, override val isExplored: Boolean) : Cell(isMarked = isMarked, isExplored = isExplored) {
     override fun remark(): Cell {
-        require (!explored) { "Mine cannot be explored" }
-        return Mine(marked = !marked, explored = false)
+        require (!isExplored) { "Mine cannot be explored" }
+        return Mine(isMarked = !isMarked, isExplored = false)
     }
     override fun loser() = "X"
-    override fun explore() = Mine(marked = false, explored = true)
-    override fun toString() = if (marked) "*" else "."
+    override fun explore() = Mine(isMarked = false, isExplored = true)
+    override fun toString() = if (isMarked) "*" else "."
 }
