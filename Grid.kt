@@ -28,10 +28,10 @@ class Grid(private val numberOfMines: Int, private val matrix: Matrix = emptyMat
 
         for (neighbor in position.neighbors) {
             val next = current.reveal(neighbor)
-            if (next.isZero(neighbor))
-                current = exploreRecursive(next, neighbor)
+            current = if (next.isZero(neighbor) && !next.cellAt(neighbor).isExplored)
+                exploreRecursive(next, neighbor)
             else
-                current = next
+                next
         }
 
         return current
