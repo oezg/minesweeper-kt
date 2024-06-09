@@ -14,7 +14,6 @@ data class Minesweeper(val numberOfMines: Int) {
                     Action.Result.GameNotOver
             }
             is Action.Explore -> {
-
                 if (grid.isNotYetExplored)
                     grid = grid.setupMines(action.position)
 

@@ -19,12 +19,11 @@ class Grid(private val numberOfMines: Int, private val matrix: Matrix = emptyMat
     fun explore(position: Action.Position): Grid =
         Grid(numberOfMines, exploreRecursive(matrix, position))
 
-    fun exploreRecursive(accumulator: Matrix, position: Action.Position): Matrix {
+    private fun exploreRecursive(accumulator: Matrix, position: Action.Position): Matrix {
         var current = accumulator.reveal(position)
 
         if (!accumulator.isZero(position))
             return current
-
 
         for (neighbor in position.neighbors) {
             val next = current.reveal(neighbor)

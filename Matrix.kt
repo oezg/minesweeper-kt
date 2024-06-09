@@ -65,6 +65,6 @@ fun Matrix.getNextMatrix(position: Action.Position, cell: Cell): Matrix =
             if (position.row == row && position.col == col)
                 cell
             else
-                this.cellAt(Action.Position(row, col))
+                this.cellAt(Action.Position(row = row, col = col))
         }
     }
