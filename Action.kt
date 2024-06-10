@@ -9,6 +9,7 @@ sealed class Action(open val position: Position) {
                 .filter { row + it.row in 0 until SIDE && col + it.col in 0 until SIDE }
                 .map { Position(row = row + it.row, col = col + it.col) }
     }
+
     enum class Result {
         PlayerWins,
         PlayerLoses,
