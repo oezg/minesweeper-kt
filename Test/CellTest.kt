@@ -6,13 +6,19 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class CellTest {
+
+}
+
+class EmptyTest {
     @Test
     fun remarkEmpty() {
         val expected = Empty(minesAround = 0, isMarked = true, isExplored = false)
         val sut = Empty(minesAround = 0, isMarked = false, isExplored = false)
         assertEquals(expected, sut.remark())
     }
+}
 
+class MineTest {
     @Test
     fun remarkMine() {
         val expected = Mine(isMarked = true, isExplored = false)
